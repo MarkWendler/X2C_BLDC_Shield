@@ -1,25 +1,25 @@
 /**
-  System Interrupts Generated Driver File 
+  @Generated PIC24 / dsPIC33 / PIC32MM MCUs Source File
 
   @Company:
     Microchip Technology Inc.
 
   @File Name:
-    interrupt_manager.h
+    clock.h
 
   @Summary:
-    This is the generated driver implementation file for setting up the
-    interrupts using PIC24 / dsPIC33 / PIC32MM MCUs
+    This is the clock.h file generated using PIC24 / dsPIC33 / PIC32MM MCUs
 
   @Description:
-    This source file provides implementations for PIC24 / dsPIC33 / PIC32MM MCUs interrupts.
-    Generation Information : 
+    This header file provides implementations for driver APIs for all modules selected in the GUI.
+    Generation Information :
         Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
         Compiler          :  XC16 v1.41
         MPLAB             :  MPLAB X v5.30
 */
+
 /*
     (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
@@ -42,20 +42,39 @@
     TERMS.
 */
 
-/**
-    Section: Includes
-*/
-#include <xc.h>
+#ifndef CLOCK_H
+#define	CLOCK_H
 
 /**
-    void INTERRUPT_Initialize (void)
+  Section: Included Files
 */
-void INTERRUPT_Initialize (void)
-{
-    //    CNI: Change Notification Interrupt
-    //    Priority: 1
-        IPC4bits.CNIP = 1;
-    //    TI: Timer 1
-    //    Priority: 1
-        IPC0bits.T1IP = 1;
-}
+
+#include <stdbool.h>
+
+#ifndef _XTAL_FREQ
+#define _XTAL_FREQ  30401250UL
+#endif
+
+#define CLOCK_SystemFrequencyGet()        (30401250UL)
+
+#define CLOCK_PeripheralFrequencyGet()    (CLOCK_SystemFrequencyGet() / 2)
+
+#define CLOCK_InstructionFrequencyGet()   (CLOCK_SystemFrequencyGet() / 2)
+/**
+ * @Param
+    none
+ * @Returns
+    none
+ * @Description
+    Initializes the oscillator to the default states configured in the
+ *                  MCC GUI
+ * @Example
+    CLOCK_Initialize(void);
+ */
+void CLOCK_Initialize(void);
+
+
+#endif	/* CLOCK_H */
+/**
+ End of File
+*/

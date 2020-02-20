@@ -1,25 +1,25 @@
 /**
-  System Interrupts Generated Driver File 
+  RESET Generated Driver File
 
-  @Company:
+  @Company
     Microchip Technology Inc.
 
-  @File Name:
-    interrupt_manager.h
+  @File Name
+    reset.c
 
-  @Summary:
-    This is the generated driver implementation file for setting up the
-    interrupts using PIC24 / dsPIC33 / PIC32MM MCUs
+  @Summary
+    This is the generated driver implementation file for the RESET driver using PIC24 / dsPIC33 / PIC32MM MCUs
 
-  @Description:
-    This source file provides implementations for PIC24 / dsPIC33 / PIC32MM MCUs interrupts.
-    Generation Information : 
+  @Description
+    This header file provides implementations for driver APIs for RESET.
+    Generation Information :
         Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
         Compiler          :  XC16 v1.41
         MPLAB             :  MPLAB X v5.30
 */
+
 /*
     (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
@@ -42,20 +42,43 @@
     TERMS.
 */
 
-/**
-    Section: Includes
-*/
-#include <xc.h>
+#ifndef RESET_H
+#define	RESET_H
+
+#include <stdint.h>
+#include "reset_types.h"
 
 /**
-    void INTERRUPT_Initialize (void)
+* Checks reset cause, flashes UI with an error code as a result.
+* 
+* Note: this function should be called before any use of CLRWDT
+* since it has a side-effect of clearing the appropriate bits in the
+* register showing reset cause (see DS70602B page 8-10)
 */
-void INTERRUPT_Initialize (void)
-{
-    //    CNI: Change Notification Interrupt
-    //    Priority: 1
-        IPC4bits.CNIP = 1;
-    //    TI: Timer 1
-    //    Priority: 1
-        IPC0bits.T1IP = 1;
-}
+uint16_t RESET_GetCause(void);
+
+/**
+ * It handles the reset cause by clearing the cause register values.
+ * Its a weak function user can override this function.
+ * @return None
+ * @example
+ * <code>
+ * RESET_CauseHandler();
+ * </code>
+ */
+void __attribute__ ((weak)) RESET_CauseHandler(void);
+
+/**
+ * This function resets the reset cause register.
+ * @return None
+ * @example
+ * <code>
+ * RESET_CauseClearAll();
+ * </code>
+ */
+void RESET_CauseClearAll();
+
+#endif	/* RESET_H */
+/**
+ End of File
+*/

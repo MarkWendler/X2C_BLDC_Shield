@@ -13,15 +13,15 @@
   @Description:
     This header file provides implementations for driver APIs for all modules selected in the GUI.
     Generation Information :
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : 1.55
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.34
-        MPLAB             :  MPLAB X v4.15
+        Compiler          :  XC16 v1.41
+        MPLAB             :  MPLAB X v5.30
 */
 
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -45,6 +45,10 @@
 #ifndef MCC_H
 #define	MCC_H
 #include <xc.h>
+#include "reset.h"
+#include "system.h"
+#include "system_types.h"
+#include "clock.h"
 #include "pin_manager.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,116 +56,15 @@
 #include "traps.h"
 #include "tmr1.h"
 #include "uart1.h"
+#include "reset.h"
 #include "X2CScope/X2CScope.h"
+#include "adc1.h"
+#include "watchdog.h"
+#include "pwm.h"
 
+#ifndef _XTAL_FREQ
 #define _XTAL_FREQ  30401250UL
-
-/**
-  Section: Type defines
- */ 
-    
-/** 
- * CORCON initialization type enumerator. Supported types:
- * CORCON_MODE_PORVALUES
- * CORCON_MODE_ENABLEALLSATNORMAL_ROUNDBIASED
- * CORCON_MODE_ENABLEALLSATNORMAL_ROUNDUNBIASED
- * CORCON_MODE_DISABLEALLSAT_ROUNDBIASED
- * CORCON_MODE_DISABLEALLSAT_ROUNDUNBIASED
- * CORCON_MODE_ENABLEALLSATSUPER_ROUNDBIASED
- * CORCON_MODE_ENABLEALLSATSUPER_ROUNDUNBIASED
- */
-typedef enum tagCORCON_MODE_TYPE
-{ 
-    CORCON_MODE_PORVALUES   = 0x0020,                       /** Use POR values of CORCON */
-    CORCON_MODE_ENABLEALLSATNORMAL_ROUNDBIASED = 0x00E2,    /** Enable saturation for ACCA, ACCB
-                                                             *  and Dataspace write, enable normal
-                                                             *  ACCA/ACCB saturation mode and set
-                                                             *  rounding to Biased (conventional)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-    CORCON_MODE_ENABLEALLSATNORMAL_ROUNDUNBIASED = 0x00E0,  /** Enable saturation for ACCA, ACCB
-                                                             *  and Dataspace write, enable normal
-                                                             *  ACCA/ACCB saturation mode and set
-                                                             *  rounding to Unbiased (convergent)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-    CORCON_MODE_DISABLEALLSAT_ROUNDBIASED = 0x0022,         /** Disable saturation for ACCA, ACCB
-                                                             *  and Dataspace write and set
-                                                             *  rounding to Biased (conventional)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-    CORCON_MODE_DISABLEALLSAT_ROUNDUNBIASED = 0x0020,       /** Disable saturation for ACCA, ACCB
-                                                             *  and Dataspace write and set
-                                                             *  rounding to Unbiased (convergent)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-    CORCON_MODE_ENABLEALLSATSUPER_ROUNDBIASED = 0x00F2,    /** Enable saturation for ACCA, ACCB
-                                                             *  and Dataspace write, enable super
-                                                             *  ACCA/ACCB saturation mode and set
-                                                             *  rounding to Biased (conventional)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-    CORCON_MODE_ENABLEALLSATSUPER_ROUNDUNBIASED = 0x00F0,  /** Enable saturation for ACCA, ACCB
-                                                             *  and Dataspace write, enable super
-                                                             *  ACCA/ACCB saturation mode and set
-                                                             *  rounding to Unbiased (convergent)
-                                                             *  mode. Rest of CORCON settings are
-                                                             *  set to the default POR values.
-                                                             *  */
-} SYSTEM_CORCON_MODES;
-
-/** 
- * RCON error type enumerator. Supported types:
- * ERR_RCON_TRAPR
- * ERR_RCON_IOPUWR
- * ERR_RCON_CM 
- * ERR_RCON_WDTO_ISR
- */
-typedef enum tagERROR_TYPE
-{
-    ERR_RCON_TRAPR      = 1, /** A Trap Conflict Reset has occurred **/
-    ERR_RCON_IOPUWR     = 2, /** An illegal opcode detection, an illegal address mode or Uninitialized W register used as an
-                             *   Address Pointer caused a Reset **/
-    ERR_RCON_CM         = 3, /** A Configuration Mismatch Reset has occurred **/
-    ERR_RCON_WDTO_ISR   = 4  /** WDT time-out has occurred **/
-}SYSTEM_RESET_TYPES;
-
-/** 
- * RESET CAUSE Masks. Supported masks:
- * RESET_MASK_WDTO
- * RESET_MASK_SWR
- * REST_MASK_EXTR
- * RESET_MASK_CM
- * RESET_MASK_IOPUWR
- * RESET_MASK_TRAPR
- */
-typedef enum tagRESET_MASKS
-{ 
-  RESET_MASK_WDTO = 0x0010,
-  RESET_MASK_SWR = 0x0040,
-  RESET_MASK_EXTR = 0x0080, 
-  RESET_MASK_CM = 0x0200, 
-  RESET_MASK_IOPUWR = 0x4000, 
-  RESET_MASK_TRAPR = 0x8000, 
-} RESET_MASKS;
-
-/**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the device to the default states configured in the
- *                  MCC GUI
- * @Example
-    SYSTEM_Initialize(void);
- */
-void SYSTEM_Initialize(void);
+#endif
 
 /**
  * @Param
@@ -174,7 +77,7 @@ void SYSTEM_Initialize(void);
  * @Example
     OSCILLATOR_Initialize(void);
  */
-void OSCILLATOR_Initialize(void);
+void OSCILLATOR_Initialize(void) __attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse CLOCK_Initialize (void) instead. ")));
 
 /**
 * Checks reset cause, flashes UI with an error code as a result.
@@ -183,7 +86,7 @@ void OSCILLATOR_Initialize(void);
 * since it has a side-effect of clearing the appropriate bits in the
 * register showing reset cause (see DS70602B page 8-10)
 */
-uint16_t SYSTEM_GetResetCause(void);
+uint16_t SYSTEM_GetResetCause(void) __attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse RESET_GetCause(void) (void) instead. ")));
 
 
 /**
@@ -193,6 +96,7 @@ uint16_t SYSTEM_GetResetCause(void);
  * WDT_WatchdogtimerSoftwareEnable();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse WATCHDOG_TimerSoftwareEnable (void) instead. ")))
 inline static void WDT_WatchdogtimerSoftwareEnable(void)
 {
     RCONbits.SWDTEN = 1;
@@ -205,6 +109,7 @@ inline static void WDT_WatchdogtimerSoftwareEnable(void)
  * WDT_WatchdogtimerSoftwareDisable();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse WATCHDOG_TimerSoftwareDisable (void) instead. ")))
 inline static void WDT_WatchdogtimerSoftwareDisable(void)
 {
     RCONbits.SWDTEN = 0;
@@ -217,6 +122,7 @@ inline static void WDT_WatchdogtimerSoftwareDisable(void)
  * WDT_WatchdogTimerClear();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse WATCHDOG_TimerClear (void) instead. ")))
 inline static void WDT_WatchdogTimerClear(void)
 {
     ClrWdt();
@@ -231,6 +137,7 @@ inline static void WDT_WatchdogTimerClear(void)
  * devIdAddress = DEVICE_DeviceIdRegisterAddressGet();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse SYSTEM_DeviceIdRegisterAddressGet (void) instead. ")))
 inline static uint32_t DEVICE_DeviceIdRegisterAddressGet(void)
 {
     return __DEVID_BASE;
@@ -243,6 +150,7 @@ inline static uint32_t DEVICE_DeviceIdRegisterAddressGet(void)
  * CORCON_Initialize();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse SYSTEM_CORCONInitialize() instead. ")))
 inline static void CORCON_Initialize()
 {
     CORCON = (CORCON & 0x00F2) | CORCON_MODE_PORVALUES;    // POR value
@@ -257,6 +165,7 @@ inline static void CORCON_Initialize()
  * CORCON_ModeOperatingSet(CORCON_MODE_ENABLEALLSATNORMAL_ROUNDUNBIASED);
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse SYSTEM_CORCONModeOperatingSet(SYSTEM_CORCON_MODES modeValue) instead. ")))
 inline static void CORCON_ModeOperatingSet(SYSTEM_CORCON_MODES modeValue)
 {
     CORCON = (CORCON & 0x00F2) | modeValue;
@@ -270,6 +179,7 @@ inline static void CORCON_ModeOperatingSet(SYSTEM_CORCON_MODES modeValue)
  * CORCON_RegisterValueSet(0x00E2);
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse SYSTEM_CORCONRegisterValueSet(uint16_t value) instead. ")))
 inline static void CORCON_RegisterValueSet(uint16_t value)
 {
     CORCON = value;
@@ -283,6 +193,7 @@ inline static void CORCON_RegisterValueSet(uint16_t value)
  * corconSave = CORCON_RegisterValueGet();
  * </code>
  */
+__attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse SYSTEM_CORCONRegisterValueGet (void) instead. ")))
 inline static uint16_t CORCON_RegisterValueGet(void)
 {    
     return CORCON;
@@ -297,7 +208,7 @@ inline static uint16_t CORCON_RegisterValueGet(void)
  * SYSTEM_ResetCauseHandler();
  * </code>
  */
-void __attribute__ ((weak)) SYSTEM_ResetCauseHandler(void);
+void __attribute__ ((weak)) SYSTEM_ResetCauseHandler(void) __attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse RESET_CauseHandler(void) (void) instead. ")));
 
 /**
  * This function resets the reset cause register.
@@ -307,7 +218,7 @@ void __attribute__ ((weak)) SYSTEM_ResetCauseHandler(void);
  * SYSTEM_ResetCauseClearAll();
  * </code>
  */
-void SYSTEM_ResetCauseClearAll();
+void SYSTEM_ResetCauseClearAll() __attribute__((deprecated ("\nThis will be removed in future MCC releases. \nUse RESET_CauseClearAll(void) (void) instead. ")));
 
 #endif	/* MCC_H */
 /**

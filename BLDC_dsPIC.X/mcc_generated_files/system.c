@@ -1,25 +1,25 @@
 /**
-  System Interrupts Generated Driver File 
+  @Generated PIC24 / dsPIC33 / PIC32MM MCUs Source File
 
   @Company:
     Microchip Technology Inc.
 
   @File Name:
-    interrupt_manager.h
+    system.h
 
   @Summary:
-    This is the generated driver implementation file for setting up the
-    interrupts using PIC24 / dsPIC33 / PIC32MM MCUs
+    This is the sysetm.h file generated using PIC24 / dsPIC33 / PIC32MM MCUs
 
   @Description:
-    This source file provides implementations for PIC24 / dsPIC33 / PIC32MM MCUs interrupts.
-    Generation Information : 
+    This header file provides implementations for driver APIs for all modules selected in the GUI.
+    Generation Information :
         Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
         Compiler          :  XC16 v1.41
         MPLAB             :  MPLAB X v5.30
 */
+
 /*
     (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
@@ -42,20 +42,32 @@
     TERMS.
 */
 
-/**
-    Section: Includes
-*/
-#include <xc.h>
+#include "pin_manager.h"
+#include "clock.h"
+#include "system.h"
+#include "system_types.h"
+#include "interrupt_manager.h"
+#include "traps.h"
+#include "tmr1.h"
+#include "uart1.h"
+#include "X2CScope/X2CScope.h"
+#include "adc1.h"
+#include "pwm.h"
+
+void SYSTEM_Initialize(void)
+{
+    PIN_MANAGER_Initialize();
+    INTERRUPT_Initialize();
+    CLOCK_Initialize();
+    UART1_Initialize();
+    X2CScope_Init();
+    ADC1_Initialize();
+    PWM_Initialize();
+    TMR1_Initialize();
+    INTERRUPT_GlobalEnable();
+    SYSTEM_CORCONModeOperatingSet(CORCON_MODE_PORVALUES);
+}
 
 /**
-    void INTERRUPT_Initialize (void)
+ End of File
 */
-void INTERRUPT_Initialize (void)
-{
-    //    CNI: Change Notification Interrupt
-    //    Priority: 1
-        IPC4bits.CNIP = 1;
-    //    TI: Timer 1
-    //    Priority: 1
-        IPC0bits.T1IP = 1;
-}

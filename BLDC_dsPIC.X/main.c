@@ -1,27 +1,27 @@
 /**
-  Generated Main Source File
+  Generated main.c file from MPLAB Code Configurator
 
-  Company:
+  @Company
     Microchip Technology Inc.
 
-  File Name:
+  @File Name
     main.c
 
-  Summary:
-    This is the main file generated using PIC24 / dsPIC33 / PIC32MM MCUs
+  @Summary
+    This is the generated main.c using PIC24 / dsPIC33 / PIC32MM MCUs.
 
-  Description:
-    This header file provides implementations for driver APIs for all modules selected in the GUI.
+  @Description
+    This source file provides main entry point for system initialization and application code development.
     Generation Information :
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : 1.55
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.34
-        MPLAB             :  MPLAB X v4.15
+        Compiler          :  XC16 v1.41
+        MPLAB 	          :  MPLAB X v5.30
 */
 
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -42,13 +42,21 @@
     TERMS.
 */
 
-#include "mcc_generated_files/mcc.h"
+/**
+  Section: Included Files
+*/
+#include "mcc_generated_files/system.h"
+#include "mcc_generated_files/X2CScope/X2CScope.h"
+#include "mcc_generated_files/adc1.h"
+#include "mcc_generated_files/pwm.h"
+#include "mcc_generated_files/interrupt_manager.h"
+#include "mcc_generated_files/pin_manager.h"
 
 /*
                          Main application
  */
 
-char hallState;
+uint8_t hallState;
 bool hall1,hall2,hall3;
 char currentStep;
 char pwmState;
@@ -62,6 +70,8 @@ PhaseState phase1,phase2,phase3;
 
 /* steps are the following: 1,3,2,6,4,5 */
 char hallToStepTranslator[] = {0,1,3,2,5,6,4};
+uint8_t stepToPhaseShiftCW[] = { 3,4,5,6,1,2};
+uint8_t stepToPhaseShiftCCW[] = { 5,6,1,2,3,4};
 char stepToPhaseTranslate[] = {
     //Step neutral: p1-M p2-N p3-N
     0b010101,
@@ -77,80 +87,38 @@ char stepToPhaseTranslate[] = {
     //Step 5: p1-N p2-GND p3-VDD
     0b011100,
     //Step 6: p1-VDD p2-GND p3-N
-    0b001101,    
-
-            
+    0b001101,           
 };
+void hallStateChange(void);
 
+uint16_t pot_val;
 int main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
 
-
+    //register change notificcation interrupt handler function
+    CN_SetInterruptHandler(hallStateChange);
     INTERRUPT_GlobalEnable();
-
-        hallState = (PORTB>>6) & 0b111;
-        
-    currentStep = hallToStepTranslator[hallState];    
-    if (currentStep > 4) pwmState = stepToPhaseTranslate[currentStep-4]; // phase shifting
-    else pwmState = stepToPhaseTranslate[currentStep+2]; // phase shifting
-    LATB = ((((unsigned int) pwmState)<<10) & (unsigned int)0xFC00) | (LATB & 0x3FF);
+    ADC1_ChannelSelect(AN_POT);
     
     while (1)
     {
         X2CScope_Communicate();
-        /*
-         * switch (phase1) {
-            case 0:
-                IO_PWM1H_SetHigh(); //Switch OFF High side
-                IO_PWM1L_SetHigh(); //Switch ON Low side
-                break;
-            case 1:
-                IO_PWM1H_SetLow(); //Switch ON High side
-                IO_PWM1L_SetLow(); //Switch OFF Low side
-                break;
-            case 2:
-                IO_PWM1H_SetHigh(); //Switch OFF High side
-                IO_PWM1L_SetLow(); //Switch OFF Low side  
-                break;
+        
+        if(ADC1_IsConversionComplete(AN_POT)){
+            pot_val = ADC1_ConversionResultGet(AN_POT);
+            PWM_MasterDutyCycleSet(pot_val);
         }
-        switch (phase2) {
-            case 0:
-                IO_PWM2H_SetHigh(); //Switch OFF High side
-                IO_PWM2L_SetHigh(); //Switch ON Low side
-                break;
-            case 1:
-                IO_PWM2H_SetLow(); //Switch ON High side
-                IO_PWM2L_SetLow(); //Switch OFF Low side
-                break;
-            case 2:
-                IO_PWM2H_SetHigh(); //Switch OFF High side
-                IO_PWM2L_SetLow(); //Switch OFF Low side
-                break;
-        }
-        switch (phase3) {
-            case 0:
-                IO_PWM3H_SetHigh(); //Switch OFF High side
-                IO_PWM3L_SetHigh(); //Switch ON Low side
-                break;
-            case 1:
-                IO_PWM3H_SetLow(); //Switch ON High side
-                IO_PWM3L_SetLow(); //Switch OFF Low side
-                break;
-            case 2:
-                IO_PWM3H_SetHigh(); //Switch OFF High side
-                IO_PWM3L_SetLow(); //Switch OFF Low side
-                break;
-        }          
-         */ 
+        
+
     }
 }
 
 
 
 /* Interrupt service routine for the CNI interrupt. */
-void __attribute__ (( interrupt, no_auto_psv )) _CNInterrupt ( void )
+void hallStateChange(void)
 {
     if(IFS1bits.CNIF == 1)
     {
@@ -164,20 +132,108 @@ void __attribute__ (( interrupt, no_auto_psv )) _CNInterrupt ( void )
         IO_LED_Toggle();
         
         currentStep = hallToStepTranslator[hallState];
-        if(IO_S2_GetValue()){
-            if(IO_S1_GetValue()){
-                if (currentStep > 4) pwmState = stepToPhaseTranslate[currentStep-4]; // phase shifting
-                else pwmState = stepToPhaseTranslate[currentStep+2]; // phase shifting
-            }
-            else {
-                if (currentStep < 2) pwmState = stepToPhaseTranslate[currentStep+5]; // phase shifting
-                else pwmState = stepToPhaseTranslate[currentStep-1]; // phase shifting 
-            }
-        LATB = ((((unsigned int) pwmState)<<10) & (unsigned int)0xFC00) | (LATB & 0x3FF);            
-        }
-        else{
-            pwmState = stepToPhaseTranslate[0];
-            LATB = ((((unsigned int) pwmState)<<10) & (unsigned int)0xFC00) | (LATB & 0x3FF);  
+        currentStep = stepToPhaseShiftCW[currentStep];
+        switch (currentStep){
+            case 0: //Step neutral: p1-M p2-N p3-N
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+                break;
+            case 1:    //Step 1: p1-VDD(PWM) p2-N p3-GND
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: neutral
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: GND
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            case 2:  //Step 2: p1-N p2-VDD(PWM) p3-GND
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: VDD (PWM)
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: GND
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            case 3://Step 3: p1-GND p2-VDD p3-N
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: VDD (PWM)
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: Neutral
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            case 4:    //Step 4: p1-GND p2-N p3-VDD
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: Neutral
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: VDD(PWM)
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            case 5:     //Step 5: p1-N p2-GND p3-VDD
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: GND
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: VDD(PWM)
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            case 6:     //Step 6: p1-VDD(PWM) p2-GND p3-N
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideHighDisable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                //p2: GND
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b11); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                //p3: Neutral
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                break;
+            default://Step neutral: p1-M p2-N p3-N
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp                
+                PWM_OverrideLowEnable(PWM_GENERATOR_1);
+                PWM_OverrideLowEnable(PWM_GENERATOR_2);
+                PWM_OverrideLowEnable(PWM_GENERATOR_3);
+                PWM_OverrideHighEnable(PWM_GENERATOR_1);
+                PWM_OverrideHighEnable(PWM_GENERATOR_2);
+                PWM_OverrideHighEnable(PWM_GENERATOR_3);
+
         }
          
     }

@@ -14,15 +14,15 @@
   @Description
     This source file provides APIs for driver for TMR1. 
     Generation Information : 
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : 1.55
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.34
-        MPLAB 	          :  MPLAB X v4.15
+        Compiler          :  XC16 v1.41
+        MPLAB             :  MPLAB X v5.30
 */
 
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -47,8 +47,14 @@
   Section: Included Files
 */
 
-#include <xc.h>
+#include <stdio.h>
 #include "tmr1.h"
+
+/**
+ Section: File specific functions
+*/
+void (*TMR1_InterruptHandler)(void) = NULL;
+void TMR1_CallBack(void);
 
 /**
   Section: Data Type Definitions
@@ -57,10 +63,10 @@
 /** TMR Driver Hardware Instance Object
 
   @Summary
-    Defines the object required for the maintainence of the hardware instance.
+    Defines the object required for the maintenance of the hardware instance.
 
   @Description
-    This defines the object required for the maintainence of the hardware
+    This defines the object required for the maintenance of the hardware
     instance. This object exists once per hardware instance of the peripheral.
 
   Remarks:
@@ -70,9 +76,9 @@
 typedef struct _TMR_OBJ_STRUCT
 {
     /* Timer Elapsed */
-    bool                                                    timerElapsed;
+    volatile bool           timerElapsed;
     /*Software Counter value*/
-    uint8_t                                                 count;
+    volatile uint8_t        count;
 
 } TMR_OBJ;
 
@@ -82,24 +88,26 @@ static TMR_OBJ tmr1_obj;
   Section: Driver Interface
 */
 
-
 void TMR1_Initialize (void)
 {
     //TMR1 0; 
-    TMR1 = 0x0;
+    TMR1 = 0x00;
     //Period = 0.0010000247 s; Frequency = 15200625 Hz; PR1 15201; 
     PR1 = 0x3B61;
     //TCKPS 1:1; TON enabled; TSIDL disabled; TCS FOSC/2; TSYNC disabled; TGATE disabled; 
     T1CON = 0x8000;
 
-    
+    if(TMR1_InterruptHandler == NULL)
+    {
+        TMR1_SetInterruptHandler(&TMR1_CallBack);
+    }
+
     IFS0bits.T1IF = false;
     IEC0bits.T1IE = true;
 	
     tmr1_obj.timerElapsed = false;
 
 }
-
 
 
 void __attribute__ ( ( interrupt, no_auto_psv ) ) _T1Interrupt (  )
@@ -110,7 +118,10 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _T1Interrupt (  )
 
     // ticker function call;
     // ticker is 1 -> Callback function gets called everytime this ISR executes
-    TMR1_CallBack();
+    if(TMR1_InterruptHandler) 
+    { 
+           TMR1_InterruptHandler(); 
+    }
 
     //***User Area End
 
@@ -118,7 +129,6 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _T1Interrupt (  )
     tmr1_obj.timerElapsed = true;
     IFS0bits.T1IF = false;
 }
-
 
 void TMR1_Period16BitSet( uint16_t value )
 {
@@ -150,6 +160,13 @@ uint16_t TMR1_Counter16BitGet( void )
 void __attribute__ ((weak)) TMR1_CallBack(void)
 {
     // Add your custom callback code here
+}
+
+void  TMR1_SetInterruptHandler(void (* InterruptHandler)(void))
+{ 
+    IEC0bits.T1IE = false;
+    TMR1_InterruptHandler = InterruptHandler; 
+    IEC0bits.T1IE = true;
 }
 
 void TMR1_Start( void )

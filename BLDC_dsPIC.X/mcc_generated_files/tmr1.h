@@ -13,15 +13,15 @@
   @Description
     This header file provides APIs for driver for TMR1. 
     Generation Information : 
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - pic24-dspic-pic32mm : 1.55
+        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.166.0
         Device            :  dsPIC33EP256MC502
     The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.34
-        MPLAB 	          :  MPLAB X v4.15
+        Compiler          :  XC16 v1.41
+        MPLAB 	          :  MPLAB X v5.30
 */
 
 /*
-    (c) 2016 Microchip Technology Inc. and its subsidiaries. You may use this
+    (c) 2019 Microchip Technology Inc. and its subsidiaries. You may use this
     software and any derivatives exclusively with Microchip products.
 
     THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
@@ -202,21 +202,24 @@ uint16_t TMR1_Counter16BitGet( void );
 
 /**
   @Summary
-    Callback for timer interrupt.
+    Assigns a function pointer with a callback address.
 
   @Description
-    This routine is callback for timer interrupt
+    This routine assigns a function pointer with a callback address.
 
   @Param
-    None.
+    Address of the callback routine.
 
   @Returns
     None
  
   @Example 
-    Refer to the example of TMR1_Initialize();
+    <code>
+        TMR1_SetInterruptHandler(&TMR1_CallBack);
+    </code>
 */
-void TMR1_CallBack(void);
+
+void TMR1_SetInterruptHandler(void (* InterruptHandler)(void));
 
 /**
   @Summary
