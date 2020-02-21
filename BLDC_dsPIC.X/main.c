@@ -108,10 +108,10 @@ int main(void)
         
         if(ADC1_IsConversionComplete(AN_POT)){
             pot_val = ADC1_ConversionResultGet(AN_POT);
-            PWM_MasterDutyCycleSet(pot_val<<2);
+            //Master period is 0xFFF
+            //ADC 12bit -> max 0xFFF so no scaling needed
+            PWM_MasterDutyCycleSet(pot_val);
         }
-        
-
     }
 }
 

@@ -56,8 +56,8 @@ void PWM_Initialize (void)
 {
     // PCLKDIV 1; 
     PTCON2 = 0x00;
-    // PTPER 30000; 
-    PTPER = 0x7530;
+    // PTPER 4095; 
+    PTPER = 0xFFF;
     // SEVTCMP 0; 
     SEVTCMP = 0x00;
     // MDC 0; 
