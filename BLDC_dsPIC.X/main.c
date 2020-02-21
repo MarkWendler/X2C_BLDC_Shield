@@ -70,8 +70,8 @@ PhaseState phase1,phase2,phase3;
 
 /* steps are the following: 1,3,2,6,4,5 */
 char hallToStepTranslator[] = {0,1,3,2,5,6,4};
-uint8_t stepToPhaseShiftCW[] = { 3,4,5,6,1,2};
-uint8_t stepToPhaseShiftCCW[] = { 5,6,1,2,3,4};
+uint8_t stepToPhaseShiftCW[] = { 0,3,4,5,6,1,2};
+uint8_t stepToPhaseShiftCCW[] = { 0,6,1,2,3,4,5};
 char stepToPhaseTranslate[] = {
     //Step neutral: p1-M p2-N p3-N
     0b010101,
@@ -108,7 +108,7 @@ int main(void)
         
         if(ADC1_IsConversionComplete(AN_POT)){
             pot_val = ADC1_ConversionResultGet(AN_POT);
-            PWM_MasterDutyCycleSet(pot_val);
+            PWM_MasterDutyCycleSet(pot_val<<2);
         }
         
 
@@ -135,9 +135,9 @@ void hallStateChange(void)
         currentStep = stepToPhaseShiftCW[currentStep];
         switch (currentStep){
             case 0: //Step neutral: p1-M p2-N p3-N
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
@@ -146,87 +146,87 @@ void hallStateChange(void)
                 PWM_OverrideHighEnable(PWM_GENERATOR_3);
                 break;
             case 1:    //Step 1: p1-VDD(PWM) p2-N p3-GND
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: neutral
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: GND
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             case 2:  //Step 2: p1-N p2-VDD(PWM) p3-GND
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: VDD (PWM)
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: GND
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             case 3://Step 3: p1-GND p2-VDD p3-N
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: VDD (PWM)
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: Neutral
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             case 4:    //Step 4: p1-GND p2-N p3-VDD
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: Neutral
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: VDD(PWM)
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             case 5:     //Step 5: p1-N p2-GND p3-VDD
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: GND
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: VDD(PWM)
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             case 6:     //Step 6: p1-VDD(PWM) p2-GND p3-N
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
                 PWM_OverrideHighDisable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 //p2: GND
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b11); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b01); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 //p3: Neutral
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp
                 PWM_OverrideHighEnable(PWM_GENERATOR_3);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
                 break;
             default://Step neutral: p1-M p2-N p3-N
-                PWM_OverrideDataSet(PWM_GENERATOR_1,0b10); //high side pnp
-                PWM_OverrideDataSet(PWM_GENERATOR_2,0b10); //high side pnp
-                PWM_OverrideDataSet(PWM_GENERATOR_3,0b10); //high side pnp                
+                PWM_OverrideDataSet(PWM_GENERATOR_1,0b00); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_2,0b00); //high side pnp
+                PWM_OverrideDataSet(PWM_GENERATOR_3,0b00); //high side pnp                
                 PWM_OverrideLowEnable(PWM_GENERATOR_1);
                 PWM_OverrideLowEnable(PWM_GENERATOR_2);
                 PWM_OverrideLowEnable(PWM_GENERATOR_3);
