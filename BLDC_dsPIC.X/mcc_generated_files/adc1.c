@@ -81,6 +81,8 @@ void ADC1_Initialize (void)
     //Assign Default Callbacks
     ADC1_SetInterruptHandler(&ADC1_CallBack);
    
+    // Enabling ADC1 interrupt.
+    IEC0bits.AD1IE = 1;
 }
 
 void __attribute__ ((weak)) ADC1_CallBack(void)
@@ -93,7 +95,7 @@ void ADC1_SetInterruptHandler(void* handler)
     ADC1_DefaultInterruptHandler = handler;
 }
 
-void __attribute__ ((weak)) ADC1_Tasks ( void )
+void __attribute__ ( ( __interrupt__ , auto_psv, weak ) ) _AD1Interrupt ( void )	
 {
     if(IFS0bits.AD1IF)
     {

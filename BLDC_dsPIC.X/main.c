@@ -90,8 +90,8 @@ char stepToPhaseTranslate[] = {
     0b001101,           
 };
 void hallStateChange(void);
+void updatePWM_Duty(void);
 
-uint16_t pot_val;
 int main(void)
 {
     // initialize the device
@@ -99,23 +99,22 @@ int main(void)
 
     //register change notificcation interrupt handler function
     CN_SetInterruptHandler(hallStateChange);
-    INTERRUPT_GlobalEnable();
+
+    //Config ADC and register ADC interrupt handler
     ADC1_ChannelSelect(AN_POT);
+    ADC1_SetInterruptHandler(updatePWM_Duty);
+    
+    INTERRUPT_GlobalEnable();
     
     while (1)
     {
         X2CScope_Communicate();
-        
-        if(ADC1_IsConversionComplete(AN_POT)){
-            pot_val = ADC1_ConversionResultGet(AN_POT);
-            //Master period is 0xFFF
-            //ADC 12bit -> max 0xFFF so no scaling needed
-            PWM_MasterDutyCycleSet(pot_val);
-        }
     }
 }
 
-
+void updatePWM_Duty(){
+    PWM_MasterDutyCycleSet(ADC1_ConversionResultGet(AN_POT));
+}
 
 /* Interrupt service routine for the CNI interrupt. */
 void hallStateChange(void)

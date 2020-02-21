@@ -4258,7 +4258,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="ADC1" registerAlias="ADI" settingAlias="enable"/>
-         <value>disabled</value>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="Pin Module" registerAlias="CNPUB" settingAlias="CNPUB3"/>
@@ -9584,7 +9584,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\adc1.c</file>
-         <hash>a98c490c1ac7aab9bc4b91cea6358a4ec4ac36a85d8e395c3a0254b27f35361c</hash>
+         <hash>dc7913cfe71191080eaa76c71d8298fc0ae375a7c7e7bae50b26b6952cdcf8b1</hash>
       </entry>
       <entry>
          <file>main.c</file>
@@ -9620,7 +9620,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\adc1.h</file>
-         <hash>e3b8a0c02cf97ce214e0d74a657def20aa957f22f4d9df2831ec71f239ac279a</hash>
+         <hash>0163d539eb2938eb660e5c84d21eefee61e1f5ea71d0ea70efdeb377d44b1a9e</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\X2CScope\X2CScope.c</file>
@@ -9628,7 +9628,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\interrupt_manager.c</file>
-         <hash>a47b812178d7f2749f0b78c3cf51a367c08da822a7a686da73f5fe3243a171dd</hash>
+         <hash>28f08e13d4ea7e1aab6b75cd49b9ff34ab08e1431c6d8e89cd4c1e3b24b54b82</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\X2CScope\X2CScope.h</file>
