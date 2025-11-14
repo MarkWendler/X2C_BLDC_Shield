@@ -104,4 +104,4 @@ motorbench-log.0.0.txt.lck
 *.o
 *.lck
 *.bak
-
+.generated_files/

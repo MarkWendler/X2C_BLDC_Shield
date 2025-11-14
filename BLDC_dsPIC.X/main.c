@@ -51,6 +51,7 @@
 #include "mcc_generated_files/pwm.h"
 #include "mcc_generated_files/interrupt_manager.h"
 #include "mcc_generated_files/pin_manager.h"
+#include "timer2.h"
 
 /*
                          Main application
@@ -104,6 +105,9 @@ int main(void)
     ADC1_ChannelSelect(AN_POT);
     ADC1_SetInterruptHandler(updatePWM_Duty);
     
+    //init timer 2+3 for 32bit mode for later use, maybe speed measurement?
+    Timer23_Init();
+    
     INTERRUPT_GlobalEnable();
     
     while (1)
@@ -113,7 +117,8 @@ int main(void)
 }
 
 void updatePWM_Duty(){
-    PWM_MasterDutyCycleSet(ADC1_ConversionResultGet(AN_POT));
+    //scale 12bit ADC to PWM period (11bit)
+    PWM_MasterDutyCycleSet(ADC1_ConversionResultGet(AN_POT)>>1);
 }
 
 /* Interrupt service routine for the CNI interrupt. */
